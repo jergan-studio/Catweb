@@ -1,50 +1,94 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>CatWeb Block Builder FIXED</title>
+  <title>CatWeb Block JSON Generator</title>
+
   <style>
-    body { font-family: Arial; display:flex; height:100vh; margin:0; }
-    #left { width:40%; background:#f2f2f2; padding:10px; overflow:auto; }
-    #right { width:60%; padding:10px; }
-    button { width:100%; margin:5px 0; padding:10px; background:#4e9bff; color:white; border:none; border-radius:8px; }
-    textarea { width:100%; height:250px; }
-    .block { background:white; padding:8px; margin:5px 0; border-radius:6px; }
+    body {
+      margin: 0;
+      font-family: Arial;
+      display: flex;
+      height: 100vh;
+    }
+
+    #left {
+      width: 35%;
+      background: #f2f2f2;
+      padding: 10px;
+      overflow: auto;
+    }
+
+    #right {
+      width: 65%;
+      padding: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 8px;
+      background: #4e9bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    textarea {
+      width: 100%;
+      height: 300px;
+    }
+
+    .block {
+      background: white;
+      padding: 8px;
+      margin: 5px 0;
+      border-radius: 8px;
+      font-size: 13px;
+    }
   </style>
 </head>
+
 <body>
 
+<!-- LEFT -->
 <div id="left">
-  <h3>🐱 CatWeb Blocks</h3>
+  <h2>🐱 CatWeb Blocks</h2>
 
-  <button onclick="addButton()">Button</button>
-  <button onclick="addLabel()">Label</button>
-  <button onclick="addRNG()">RNG Script</button>
+  <button onclick="addButton()">+ Button + Label System</button>
+  <button onclick="addRNG()">+ RNG Logic Block</button>
+  <button onclick="addText()">+ Text Block</button>
 
-  <button onclick="build()">EXPORT VALID JSON</button>
+  <button onclick="generate()">EXPORT JSON</button>
 
-  <div id="list"></div>
+  <div id="blocks"></div>
 </div>
 
+<!-- RIGHT -->
 <div id="right">
-  <h3>📦 Output</h3>
+  <h2>📦 CatWeb JSON Output</h2>
   <textarea id="out"></textarea>
 </div>
 
 <script>
-let objects = [];
+
+let ui = [];
+let scripts = [];
+
+/* ---------------- HELPERS ---------------- */
 
 function id() {
-  return Math.random().toString(36).substring(2,6);
+  return Math.random().toString(36).slice(2,6);
 }
 
-/* ---------------- UI BLOCKS ---------------- */
+/* ---------------- BLOCK 1: UI SYSTEM ---------------- */
 
 function addButton() {
-  let bid = "b" + id();
-  let lid = "l" + id();
+  let btnId = "btn_" + id();
+  let lblId = "lbl_" + id();
 
-  objects.push({
-    globalid: bid,
+  ui.push({
+    globalid: btnId,
     class: "TextButton",
     text: "ROLL",
     background_color: "#4e9bff",
@@ -52,19 +96,21 @@ function addButton() {
     size: "{0.3,0},{0.2,0}"
   });
 
-  objects.push({
-    globalid: lid,
+  ui.push({
+    globalid: lblId,
     class: "TextLabel",
     text: "0",
     position: "{0.2,0},{0.2,0}",
     size: "{0.4,0},{0.1,0}"
   });
+
+  scripts.push(makeRNGScript(btnId, lblId));
 }
 
-/* ---------------- SCRIPT (VALID STRUCTURE) ---------------- */
+/* ---------------- BLOCK 2: RNG SCRIPT BLOCK ---------------- */
 
-function addRNG() {
-  let script = {
+function makeRNGScript(buttonId, labelId) {
+  return {
     class: "script",
     content: [
       {
@@ -74,7 +120,7 @@ function addRNG() {
         actions: [
           {
             id: "11",
-            text: ["Set", {value:"RN",l:"variable",t:"string"},"to", {value:"0",l:"any",t:"string"}]
+            text: ["Set", {value:"RN",l:"variable",t:"string"}, "to", {value:"0",l:"any",t:"string"}]
           }
         ],
         width: "350"
@@ -83,7 +129,11 @@ function addRNG() {
       {
         id: "1",
         globalid: "click",
-        text: ["When", {value:"btn",t:"object",l:"button"},"pressed..."],
+        text: [
+          "When",
+          {value: buttonId, t:"object", l:"button"},
+          "pressed..."
+        ],
         actions: [
           {
             id: "27",
@@ -91,16 +141,16 @@ function addRNG() {
               "Set",
               {value:"RN",l:"variable",t:"string"},
               "to random",
-              {value:"1",l:"n",t:"number"},
+              {value:"1",t:"number"},
               "-",
-              {value:"10",l:"n",t:"number"}
+              {value:"10",t:"number"}
             ]
           },
           {
             id: "10",
             text: [
               "Set",
-              {value:"label",t:"object"},
+              {value: labelId, t:"object"},
               "text to",
               {value:"{RN}",l:"var",t:"string"}
             ]
@@ -110,23 +160,37 @@ function addRNG() {
       }
     ]
   };
-
-  objects.push(script);
 }
 
-/* ---------------- EXPORT (VALID WRAPPER) ---------------- */
+/* ---------------- BLOCK 3: TEXT ---------------- */
 
-function build() {
+function addText() {
+  ui.push({
+    globalid: "txt_" + id(),
+    class: "TextLabel",
+    text: "Hello CatWeb",
+    position: "{0.3,0},{0.3,0}",
+    size: "{0.4,0},{0.1,0}"
+  });
+}
+
+/* ---------------- EXPORT ---------------- */
+
+function generate() {
 
   let json = {
     favicon: "1847190174",
     background: "#ffffff",
-    webcontent: objects
+    webcontent: [
+      ...scripts,
+      ...ui
+    ]
   };
 
   document.getElementById("out").value =
     JSON.stringify(json, null, 2);
 }
+
 </script>
 
 </body>
