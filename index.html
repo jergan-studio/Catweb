@@ -1,184 +1,131 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>CatWeb HTML Blocks</title>
-
+  <title>CatWeb Block Builder FIXED</title>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      display: flex;
-      height: 100vh;
-    }
-
-    #left {
-      width: 40%;
-      background: #f2f2f2;
-      padding: 10px;
-      overflow: auto;
-    }
-
-    #right {
-      width: 60%;
-      padding: 10px;
-    }
-
-    button {
-      display: block;
-      width: 100%;
-      margin: 5px 0;
-      padding: 10px;
-      border: none;
-      border-radius: 10px;
-      background: #4e9bff;
-      color: white;
-      cursor: pointer;
-    }
-
-    textarea {
-      width: 100%;
-      height: 250px;
-    }
-
-    iframe {
-      width: 100%;
-      height: 300px;
-      border: 1px solid #ccc;
-    }
-
-    .block {
-      background: white;
-      padding: 8px;
-      margin: 5px 0;
-      border-radius: 8px;
-      font-size: 13px;
-    }
+    body { font-family: Arial; display:flex; height:100vh; margin:0; }
+    #left { width:40%; background:#f2f2f2; padding:10px; overflow:auto; }
+    #right { width:60%; padding:10px; }
+    button { width:100%; margin:5px 0; padding:10px; background:#4e9bff; color:white; border:none; border-radius:8px; }
+    textarea { width:100%; height:250px; }
+    .block { background:white; padding:8px; margin:5px 0; border-radius:6px; }
   </style>
 </head>
-
 <body>
 
-<!-- LEFT PANEL -->
 <div id="left">
-  <h2>🐱 HTML Blocks</h2>
+  <h3>🐱 CatWeb Blocks</h3>
 
-  <button onclick="add('div')">+ DIV</button>
-  <button onclick="add('button')">+ BUTTON</button>
-  <button onclick="add('text')">+ TEXT</button>
-  <button onclick="add('input')">+ INPUT</button>
-  <button onclick="add('script')">+ SCRIPT</button>
+  <button onclick="addButton()">Button</button>
+  <button onclick="addLabel()">Label</button>
+  <button onclick="addRNG()">RNG Script</button>
 
-  <button onclick="exportJSON()">EXPORT JSON</button>
+  <button onclick="build()">EXPORT VALID JSON</button>
 
   <div id="list"></div>
 </div>
 
-<!-- RIGHT PANEL -->
 <div id="right">
-  <h2>📦 CatWeb JSON</h2>
+  <h3>📦 Output</h3>
   <textarea id="out"></textarea>
-
-  <h2>👀 Preview</h2>
-  <iframe id="preview"></iframe>
 </div>
 
 <script>
-let blocks = [];
+let objects = [];
 
-function add(type) {
-  let id = "id_" + Math.random().toString(36).slice(2);
-
-  let block = {
-    globalid: id,
-    type: type
-  };
-
-  if (type === "div") {
-    block.class = "Frame";
-    block.text = "Div Box";
-  }
-
-  if (type === "button") {
-    block.class = "TextButton";
-    block.text = "Button";
-    block.background_color = "#4e9bff";
-  }
-
-  if (type === "text") {
-    block.class = "TextLabel";
-    block.text = "Hello Text";
-  }
-
-  if (type === "input") {
-    block.class = "TextBox";
-    block.placeholder = "Input...";
-  }
-
-  if (type === "script") {
-    block.class = "script";
-    block.content = [
-      {
-        text: ["When website loaded..."],
-        actions: [
-          { text: ["Log", "Hello CatWeb HTML Blocks"] }
-        ]
-      }
-    ];
-  }
-
-  blocks.push(block);
-  render();
+function id() {
+  return Math.random().toString(36).substring(2,6);
 }
 
-function exportJSON() {
+/* ---------------- UI BLOCKS ---------------- */
+
+function addButton() {
+  let bid = "b" + id();
+  let lid = "l" + id();
+
+  objects.push({
+    globalid: bid,
+    class: "TextButton",
+    text: "ROLL",
+    background_color: "#4e9bff",
+    position: "{0.2,0},{0.5,0}",
+    size: "{0.3,0},{0.2,0}"
+  });
+
+  objects.push({
+    globalid: lid,
+    class: "TextLabel",
+    text: "0",
+    position: "{0.2,0},{0.2,0}",
+    size: "{0.4,0},{0.1,0}"
+  });
+}
+
+/* ---------------- SCRIPT (VALID STRUCTURE) ---------------- */
+
+function addRNG() {
+  let script = {
+    class: "script",
+    content: [
+      {
+        id: "0",
+        globalid: "load",
+        text: ["When website loaded..."],
+        actions: [
+          {
+            id: "11",
+            text: ["Set", {value:"RN",l:"variable",t:"string"},"to", {value:"0",l:"any",t:"string"}]
+          }
+        ],
+        width: "350"
+      },
+
+      {
+        id: "1",
+        globalid: "click",
+        text: ["When", {value:"btn",t:"object",l:"button"},"pressed..."],
+        actions: [
+          {
+            id: "27",
+            text: [
+              "Set",
+              {value:"RN",l:"variable",t:"string"},
+              "to random",
+              {value:"1",l:"n",t:"number"},
+              "-",
+              {value:"10",l:"n",t:"number"}
+            ]
+          },
+          {
+            id: "10",
+            text: [
+              "Set",
+              {value:"label",t:"object"},
+              "text to",
+              {value:"{RN}",l:"var",t:"string"}
+            ]
+          }
+        ],
+        width: "350"
+      }
+    ]
+  };
+
+  objects.push(script);
+}
+
+/* ---------------- EXPORT (VALID WRAPPER) ---------------- */
+
+function build() {
+
   let json = {
     favicon: "1847190174",
     background: "#ffffff",
-    webcontent: blocks
+    webcontent: objects
   };
 
   document.getElementById("out").value =
     JSON.stringify(json, null, 2);
-
-  preview(json);
-}
-
-function preview(json) {
-  let html = "<body style='font-family:Arial;padding:10px'>";
-
-  for (let b of json.webcontent) {
-    if (b.class === "TextButton") {
-      html += `<button style="background:${b.background_color}">${b.text}</button><br>`;
-    }
-
-    if (b.class === "TextLabel") {
-      html += `<div>${b.text}</div>`;
-    }
-
-    if (b.class === "TextBox") {
-      html += `<input placeholder="${b.placeholder}"><br>`;
-    }
-
-    if (b.class === "Frame") {
-      html += `<div style="padding:10px;border:1px solid #ccc;margin:5px">${b.text}</div>`;
-    }
-  }
-
-  html += "</body>";
-
-  document.getElementById("preview").srcdoc = html;
-}
-
-function render() {
-  let list = document.getElementById("list");
-  list.innerHTML = "";
-
-  blocks.forEach(b => {
-    let d = document.createElement("div");
-    d.className = "block";
-    d.innerText = b.class + " | " + (b.text || b.type);
-    list.appendChild(d);
-  });
 }
 </script>
 
