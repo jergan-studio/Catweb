@@ -1,209 +1,180 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>CatWeb Custom Blocks</title>
+<meta charset="UTF-8">
+<title>CatWeb JSON Builder</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #1e1e1e;
+  color: white;
+}
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      display: flex;
-      height: 100vh;
-    }
+#topbar {
+  padding: 10px;
+  background: #2b2b2b;
+  display: flex;
+  gap: 10px;
+}
 
-    #left {
-      width: 35%;
-      background: #f2f2f2;
-      padding: 10px;
-      overflow: auto;
-    }
+button {
+  padding: 8px 12px;
+  border: none;
+  cursor: pointer;
+  background: #4e9bff;
+  color: white;
+  border-radius: 6px;
+}
 
-    #right {
-      width: 65%;
-      padding: 10px;
-    }
+#workspace {
+  display: flex;
+  height: calc(100vh - 50px);
+}
 
-    button {
-      width: 100%;
-      padding: 10px;
-      margin: 5px 0;
-      border: none;
-      border-radius: 8px;
-      background: #4e9bff;
-      color: white;
-      cursor: pointer;
-    }
+#panel {
+  width: 300px;
+  background: #2a2a2a;
+  padding: 10px;
+}
 
-    textarea {
-      width: 100%;
-      height: 300px;
-    }
+#canvas {
+  flex: 1;
+  background: #111;
+  position: relative;
+}
 
-    input {
-      width: 100%;
-      padding: 8px;
-      margin: 5px 0;
-    }
+.block {
+  padding: 8px;
+  background: #3a3a3a;
+  margin: 5px 0;
+  cursor: pointer;
+  border-radius: 5px;
+}
 
-    .block {
-      background: white;
-      padding: 6px;
-      margin: 5px 0;
-      border-radius: 6px;
-      font-size: 12px;
-    }
-  </style>
+.ui {
+  position: absolute;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+</style>
 </head>
-
 <body>
 
-<!-- LEFT -->
-<div id="left">
-  <h3>🐱 Blocks</h3>
-
-  <button onclick="addUI()">+ Button System</button>
-  <button onclick="addText()">+ Text</button>
-
-  <h4>⚙️ Custom Script Block</h4>
-
-  <input id="cb_name" placeholder="Block name (e.g. Set Cookie)">
-  <input id="cb_type" placeholder="action type (e.g. cookie_set)">
-  <button onclick="addCustomBlock()">Add Custom Block</button>
-
-  <button onclick="addRNG()">+ RNG Script</button>
-  <button onclick="exportJSON()">EXPORT JSON</button>
-
-  <div id="list"></div>
+<div id="topbar">
+  <button onclick="addButton()">Add Button</button>
+  <button onclick="addLabel()">Add Label</button>
+  <button onclick="generateJSON()">Export JSON</button>
 </div>
 
-<!-- RIGHT -->
-<div id="right">
-  <h3>📦 Output</h3>
-  <textarea id="out"></textarea>
+<div id="workspace">
+  <div id="panel">
+    <h3>Blocks</h3>
+    <div id="list"></div>
+  </div>
+
+  <div id="canvas"></div>
 </div>
 
 <script>
-
-let ui = [];
+let objects = [];
 let scripts = [];
-let customBlocks = [];
-
-/* ---------------- ID ---------------- */
 
 function id() {
-  return Math.random().toString(36).slice(2,6);
+  return Math.random().toString(36).substring(2,7);
 }
 
-/* ---------------- UI BLOCK ---------------- */
+function addButton() {
+  const gid = id();
 
-function addUI() {
-  let btn = "btn_" + id();
-  let lbl = "lbl_" + id();
-
-  ui.push({
-    globalid: btn,
+  const btn = {
     class: "TextButton",
-    text: "ROLL",
-    background_color: "#4e9bff"
-  });
+    globalid: gid,
+    text: "Button",
+    background_color: "#4e9bff",
+    position: "{0.2,0},{0.5,0}",
+    size: "{0.2,0},{0.1,0}"
+  };
 
-  ui.push({
-    globalid: lbl,
+  objects.push(btn);
+  drawUI();
+}
+
+function addLabel() {
+  const gid = id();
+
+  const lbl = {
     class: "TextLabel",
-    text: "0"
-  });
+    globalid: gid,
+    text: "Label",
+    position: "{0.2,0},{0.2,0}",
+    size: "{0.3,0},{0.1,0}"
+  };
 
-  scripts.push(makeRNG(btn, lbl));
+  objects.push(lbl);
+  drawUI();
 }
 
-/* ---------------- TEXT ---------------- */
+function drawUI() {
+  const canvas = document.getElementById("canvas");
+  canvas.innerHTML = "";
 
-function addText() {
-  ui.push({
-    globalid: "txt_" + id(),
-    class: "TextLabel",
-    text: "Hello CatWeb"
-  });
-}
+  objects.forEach(obj => {
+    const el = document.createElement("div");
+    el.className = "ui";
+    el.innerText = obj.text;
+    el.style.background = obj.background_color || "#333";
 
-/* ---------------- CUSTOM BLOCK SYSTEM ---------------- */
+    el.style.left = "100px";
+    el.style.top = "100px";
 
-function addCustomBlock() {
-  let name = document.getElementById("cb_name").value;
-  let type = document.getElementById("cb_type").value;
-
-  if (!name || !type) return;
-
-  customBlocks.push({
-    name: name,
-    type: type
+    canvas.appendChild(el);
   });
 
-  alert("Custom block added: " + name);
+  document.getElementById("list").innerHTML =
+    objects.map(o => `<div class="block">${o.class} - ${o.globalid}</div>`).join("");
 }
 
-/* ---------------- RNG SCRIPT ---------------- */
+function generateJSON() {
 
-function makeRNG(btn, lbl) {
-  return {
+  const script = {
     class: "script",
+    globalid: "script_main",
     content: [
       {
-        id: "1",
-        text: ["When", {value:btn,t:"object",l:"button"}, "pressed..."],
+        id: "0",
+        x: "4000",
+        y: "4600",
+        globalid: "load_event",
+        text: ["When website loaded..."],
         actions: [
           {
-            id: "rand",
-            type: "set_variable",
+            id: "1",
             text: [
-              "Set",
-              {value:"RN",l:"variable",t:"string"},
-              "to random",
-              {value:"1",t:"number"},
-              "-",
-              {value:"10",t:"number"}
-            ]
-          },
-
-          // CUSTOM BLOCK INSERTION
-          ...customBlocks.map(cb => ({
-            id: cb.type,
-            type: cb.type,
-            text: ["Run custom block:", cb.name]
-          })),
-
-          {
-            id: "set_ui",
-            text: [
-              "Set",
-              {value:lbl,t:"object"},
-              "text to",
-              {value:"{RN}",l:"var",t:"string"}
+              "Log",
+              { value: "Loaded CatWeb", t: "string" }
             ]
           }
         ]
       }
     ]
   };
-}
 
-/* ---------------- EXPORT ---------------- */
-
-function exportJSON() {
-
-  let json = {
+  const json = {
     favicon: "1847190174",
     background: "#ffffff",
     webcontent: [
-      ...scripts,
-      ...ui
+      script,
+      ...objects
     ]
   };
 
-  document.getElementById("out").value =
-    JSON.stringify(json, null, 2);
+  console.log(JSON.stringify(json, null, 2));
+  alert("JSON exported to console!");
 }
 
+drawUI();
 </script>
 
 </body>
