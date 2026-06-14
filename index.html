@@ -1,66 +1,167 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>CatWeb Portal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <title>CatWeb Builder</title>
   <style>
     body {
       margin: 0;
-      background: #ffffff;
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       display: flex;
-      align-items: center;
-      justify-content: center;
       height: 100vh;
     }
 
-    .card {
-      text-align: center;
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      width: 300px;
+    #left {
+      width: 40%;
+      padding: 10px;
+      background: #f2f2f2;
+      overflow: auto;
     }
 
-    h1 {
-      margin: 0 0 10px 0;
-    }
-
-    p {
-      color: #666;
-      font-size: 14px;
+    #right {
+      width: 60%;
+      background: white;
+      padding: 10px;
     }
 
     button {
-      margin-top: 20px;
-      padding: 12px 20px;
+      padding: 10px;
+      margin: 5px;
       border: none;
-      border-radius: 12px;
       background: #4e9bff;
       color: white;
-      font-size: 16px;
+      border-radius: 10px;
       cursor: pointer;
     }
 
-    button:hover {
-      background: #2f7fe0;
+    textarea {
+      width: 100%;
+      height: 300px;
+    }
+
+    .block {
+      background: white;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
   </style>
 </head>
 
 <body>
-  <div class="card">
-    <h1>🐱 CatWeb Portal</h1>
-    <p>Click below to enter the real CatWeb experience</p>
 
-    <button onclick="go()">Enter CatWeb</button>
-  </div>
+<div id="left">
+  <h2>🐱 Blocks</h2>
 
-  <script>
-    function go() {
-      window.location.href = "https://www.roblox.com/games/16855862021/CatWeb-Make-a-Website";
+  <button onclick="addButton()">Add Button</button>
+  <button onclick="addLabel()">Add Label</button>
+  <button onclick="addScript()">Add Script</button>
+  <button onclick="exportJSON()">Export JSON</button>
+
+  <div id="blocks"></div>
+</div>
+
+<div id="right">
+  <h2>📦 CatWeb JSON</h2>
+  <textarea id="output"></textarea>
+
+  <h2>👀 Preview</h2>
+  <iframe id="preview" style="width:100%;height:300px;"></iframe>
+</div>
+
+<script>
+let webcontent = [];
+
+function addButton() {
+  webcontent.push({
+    class: "TextButton",
+    text: "Button",
+    background_color: "#4e9bff",
+    position: "{0.2,0},{0.5,0}",
+    size: "{0.3,0},{0.2,0}",
+    globalid: "btn_" + Math.random().toString(36).slice(2)
+  });
+
+  render();
+}
+
+function addLabel() {
+  webcontent.push({
+    class: "TextLabel",
+    text: "Label",
+    position: "{0.2,0},{0.2,0}",
+    size: "{0.4,0},{0.1,0}",
+    globalid: "lbl_" + Math.random().toString(36).slice(2)
+  });
+
+  render();
+}
+
+function addScript() {
+  webcontent.push({
+    class: "script",
+    content: [
+      {
+        text: ["When website loaded..."],
+        actions: [
+          {
+            text: ["Log", "Hello CatWeb"]
+          }
+        ]
+      }
+    ],
+    globalid: "scr_" + Math.random().toString(36).slice(2)
+  });
+
+  render();
+}
+
+function exportJSON() {
+  let json = {
+    favicon: "1847190174",
+    background: "#ffffff",
+    webcontent: webcontent
+  };
+
+  document.getElementById("output").value =
+    JSON.stringify(json, null, 2);
+
+  loadPreview(json);
+}
+
+function loadPreview(json) {
+  let html = `
+  <html>
+  <body style="font-family:Arial;">
+  `;
+
+  for (let obj of json.webcontent) {
+    if (obj.class === "TextButton") {
+      html += `<button style="background:${obj.background_color || '#4e9bff'}">${obj.text}</button><br>`;
     }
-  </script>
+
+    if (obj.class === "TextLabel") {
+      html += `<div>${obj.text}</div>`;
+    }
+  }
+
+  html += "</body></html>";
+
+  document.getElementById("preview").srcdoc = html;
+}
+
+function render() {
+  let div = document.getElementById("blocks");
+  div.innerHTML = "";
+
+  webcontent.forEach(b => {
+    let el = document.createElement("div");
+    el.className = "block";
+    el.innerText = b.class + " → " + (b.text || "script");
+    div.appendChild(el);
+  });
+}
+</script>
+
 </body>
 </html>
