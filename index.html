@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>CatWeb Builder</title>
+  <title>CatWeb HTML Blocks</title>
+
   <style>
     body {
       margin: 0;
@@ -12,107 +13,120 @@
 
     #left {
       width: 40%;
-      padding: 10px;
       background: #f2f2f2;
+      padding: 10px;
       overflow: auto;
     }
 
     #right {
       width: 60%;
-      background: white;
       padding: 10px;
     }
 
     button {
+      display: block;
+      width: 100%;
+      margin: 5px 0;
       padding: 10px;
-      margin: 5px;
       border: none;
+      border-radius: 10px;
       background: #4e9bff;
       color: white;
-      border-radius: 10px;
       cursor: pointer;
     }
 
     textarea {
       width: 100%;
+      height: 250px;
+    }
+
+    iframe {
+      width: 100%;
       height: 300px;
+      border: 1px solid #ccc;
     }
 
     .block {
       background: white;
-      padding: 10px;
+      padding: 8px;
       margin: 5px 0;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      font-size: 13px;
     }
   </style>
 </head>
 
 <body>
 
+<!-- LEFT PANEL -->
 <div id="left">
-  <h2>🐱 Blocks</h2>
+  <h2>🐱 HTML Blocks</h2>
 
-  <button onclick="addButton()">Add Button</button>
-  <button onclick="addLabel()">Add Label</button>
-  <button onclick="addScript()">Add Script</button>
-  <button onclick="exportJSON()">Export JSON</button>
+  <button onclick="add('div')">+ DIV</button>
+  <button onclick="add('button')">+ BUTTON</button>
+  <button onclick="add('text')">+ TEXT</button>
+  <button onclick="add('input')">+ INPUT</button>
+  <button onclick="add('script')">+ SCRIPT</button>
 
-  <div id="blocks"></div>
+  <button onclick="exportJSON()">EXPORT JSON</button>
+
+  <div id="list"></div>
 </div>
 
+<!-- RIGHT PANEL -->
 <div id="right">
   <h2>📦 CatWeb JSON</h2>
-  <textarea id="output"></textarea>
+  <textarea id="out"></textarea>
 
   <h2>👀 Preview</h2>
-  <iframe id="preview" style="width:100%;height:300px;"></iframe>
+  <iframe id="preview"></iframe>
 </div>
 
 <script>
-let webcontent = [];
+let blocks = [];
 
-function addButton() {
-  webcontent.push({
-    class: "TextButton",
-    text: "Button",
-    background_color: "#4e9bff",
-    position: "{0.2,0},{0.5,0}",
-    size: "{0.3,0},{0.2,0}",
-    globalid: "btn_" + Math.random().toString(36).slice(2)
-  });
+function add(type) {
+  let id = "id_" + Math.random().toString(36).slice(2);
 
-  render();
-}
+  let block = {
+    globalid: id,
+    type: type
+  };
 
-function addLabel() {
-  webcontent.push({
-    class: "TextLabel",
-    text: "Label",
-    position: "{0.2,0},{0.2,0}",
-    size: "{0.4,0},{0.1,0}",
-    globalid: "lbl_" + Math.random().toString(36).slice(2)
-  });
+  if (type === "div") {
+    block.class = "Frame";
+    block.text = "Div Box";
+  }
 
-  render();
-}
+  if (type === "button") {
+    block.class = "TextButton";
+    block.text = "Button";
+    block.background_color = "#4e9bff";
+  }
 
-function addScript() {
-  webcontent.push({
-    class: "script",
-    content: [
+  if (type === "text") {
+    block.class = "TextLabel";
+    block.text = "Hello Text";
+  }
+
+  if (type === "input") {
+    block.class = "TextBox";
+    block.placeholder = "Input...";
+  }
+
+  if (type === "script") {
+    block.class = "script";
+    block.content = [
       {
         text: ["When website loaded..."],
         actions: [
-          {
-            text: ["Log", "Hello CatWeb"]
-          }
+          { text: ["Log", "Hello CatWeb HTML Blocks"] }
         ]
       }
-    ],
-    globalid: "scr_" + Math.random().toString(36).slice(2)
-  });
+    ];
+  }
 
+  blocks.push(block);
   render();
 }
 
@@ -120,45 +134,50 @@ function exportJSON() {
   let json = {
     favicon: "1847190174",
     background: "#ffffff",
-    webcontent: webcontent
+    webcontent: blocks
   };
 
-  document.getElementById("output").value =
+  document.getElementById("out").value =
     JSON.stringify(json, null, 2);
 
-  loadPreview(json);
+  preview(json);
 }
 
-function loadPreview(json) {
-  let html = `
-  <html>
-  <body style="font-family:Arial;">
-  `;
+function preview(json) {
+  let html = "<body style='font-family:Arial;padding:10px'>";
 
-  for (let obj of json.webcontent) {
-    if (obj.class === "TextButton") {
-      html += `<button style="background:${obj.background_color || '#4e9bff'}">${obj.text}</button><br>`;
+  for (let b of json.webcontent) {
+    if (b.class === "TextButton") {
+      html += `<button style="background:${b.background_color}">${b.text}</button><br>`;
     }
 
-    if (obj.class === "TextLabel") {
-      html += `<div>${obj.text}</div>`;
+    if (b.class === "TextLabel") {
+      html += `<div>${b.text}</div>`;
+    }
+
+    if (b.class === "TextBox") {
+      html += `<input placeholder="${b.placeholder}"><br>`;
+    }
+
+    if (b.class === "Frame") {
+      html += `<div style="padding:10px;border:1px solid #ccc;margin:5px">${b.text}</div>`;
     }
   }
 
-  html += "</body></html>";
+  html += "</body>";
 
   document.getElementById("preview").srcdoc = html;
 }
 
 function render() {
-  let div = document.getElementById("blocks");
-  div.innerHTML = "";
+  let list = document.getElementById("list");
+  list.innerHTML = "";
 
-  webcontent.forEach(b => {
-    let el = document.createElement("div");
-    el.className = "block";
-    el.innerText = b.class + " → " + (b.text || "script");
-    div.appendChild(el);
+  blocks.forEach(b => {
+    let d = document.createElement("div");
+    d.className = "block";
+    d.innerText = b.class + " | " + (b.text || b.type);
+    list.appendChild(d);
   });
 }
 </script>
